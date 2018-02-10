@@ -81,7 +81,13 @@ boolterm2 returns [Exp tree]
 
 boolfactor returns [Exp tree]
     : 'true'
+        {
+            $tree = new BoolLit(true);
+        }
     | 'false'
+        {
+            $tree = new BoolLit(false);
+        }
     | compexp
 		{ $tree = $compexp.tree; }
     | 'forall' id '.' boolexp
