@@ -35,7 +35,10 @@ statement returns [Stmt stmt]
             $stmt = new Assign($i.name, $a.tree);
         }
     | 'begin' statementlist 'end'
-    | 'if' boolterm 'then' statement 'else' statement
+    | 'if' b=boolterm 'then' s1=statement 'else' s2=statement
+        {
+            $stmt = new If($b.tree, $s1.stmt, $s2.stmt);
+        }
     | assertion 'while' boolterm 'do' statement
     | 'assert' assertion
     ;
