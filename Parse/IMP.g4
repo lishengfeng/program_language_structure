@@ -6,21 +6,30 @@ grammar IMP;
 }
 
 program
-    : pre=assertion statementlist post=assertion
+    : pre=assertion statlist=statementlist post=assertion
 		{
 		    // FIXME: Print verification condition instead
-		    $pre.tree.print();   System.out.println();
-		    $post.tree.print();  System.out.println();
+//		    $pre.tree.print();   System.out.println();
+//		    $post.tree.print();  System.out.println();
+            Exp exp = new OpExp($pre.tree, OpExp.Op.IMP, $statlist.stmt.wp($post.tree));
+            exp.print();
+            System.out.println();
 		}
     ;
 
-statementlist
-    : statement
+statementlist returns [Stmt stmt]
+    : s=statement
+        {
+            $stmt=$s.stmt;
+        }
     | statement ';' statementlist
     ;
 
-statement
+statement returns [Stmt stmt]
     : 'skip'
+        {
+            $stmt = new Skip();
+        }
     | id ':=' arithexp
     | 'begin' statementlist 'end'
     | 'if' boolterm 'then' statement 'else' statement
