@@ -23,6 +23,9 @@ antlr: ${PDIR}/${LANG}.g4
 	(cd ${PDIR}; ${ARUN} ${LANG}.g4)
 
 test: all test.vcg
+	${GRUN} ${PDIR}.${LANG} ${START} test.vcg
+
+test-gui:
 	${GRUN} ${PDIR}.${LANG} ${START} -gui test.vcg
 
 jar: all
