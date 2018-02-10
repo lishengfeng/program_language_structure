@@ -8,4 +8,9 @@ public class IntLit extends Exp {
     public void print() {
 	System.out.print(value);
     }
+
+    @Override
+    public Exp substitute(Ident ident, Exp exp) {
+        return null;
+    }
 }

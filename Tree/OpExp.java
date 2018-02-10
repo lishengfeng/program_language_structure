@@ -45,4 +45,9 @@ public class OpExp extends Exp {
 	else
 	    print();
     }
+
+	@Override
+	public Exp substitute(Ident ident, Exp exp) {
+		return null;
+	}
 }

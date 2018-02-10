@@ -8,4 +8,9 @@ public class Ident extends Exp {
     public void print() {
 	System.out.print(name);
     }
+
+    @Override
+    public Exp substitute(Ident ident, Exp exp) {
+        return null;
+    }
 }
