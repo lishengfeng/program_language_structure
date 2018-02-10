@@ -30,7 +30,10 @@ statement returns [Stmt stmt]
         {
             $stmt = new Skip();
         }
-    | id ':=' arithexp
+    | i=id ':=' a=arithexp
+        {
+            $stmt = new Assign($i.name, $a.tree);
+        }
     | 'begin' statementlist 'end'
     | 'if' boolterm 'then' statement 'else' statement
     | assertion 'while' boolterm 'do' statement

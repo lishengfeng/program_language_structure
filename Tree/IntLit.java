@@ -11,6 +11,7 @@ public class IntLit extends Exp {
 
     @Override
     public Exp substitute(Ident ident, Exp exp) {
-        return null;
+        // Do not change integer
+        return this;
     }
 }

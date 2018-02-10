@@ -59,6 +59,15 @@ public class OpExp extends Exp {
 
     @Override
     public Exp substitute(Ident ident, Exp exp) {
-        return null;
+        OpExp opExp;
+        if (left == null) {
+            opExp = new OpExp(op, right.substitute(ident, exp));
+        } else if (right == null) {
+            return null;
+        } else {
+            opExp = new OpExp(left.substitute(ident, exp), op, right
+                    .substitute(ident, exp));
+        }
+        return opExp;
     }
 }
