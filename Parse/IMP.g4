@@ -3,6 +3,7 @@ grammar IMP;
 @header {
     package Parse;
     import Tree.*;
+    import java.util.LinkedList;
 }
 
 program
@@ -160,11 +161,22 @@ arithfactor returns [Exp tree]
     | '(' t=arithexp ')'
 		{ $tree = $t.tree; }
     | id '(' arithexplist ')'
+        {
+            $tree = new CallExp($id.name, $arithexplist.list);
+        }
     ;
 
-arithexplist
+arithexplist returns [LinkedList list]
     : arithexp
+        {
+            $list = new LinkedList<Exp>();
+            $list.addFirst($arithexp.tree);
+        }
     | arithexp ',' arithexplist
+        {
+            $list = $arithexplist.list;
+            $list.addFirst($arithexp.tree);
+        }
     ;
 
 id returns [Ident name]
