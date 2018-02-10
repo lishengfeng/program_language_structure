@@ -154,6 +154,9 @@ arithfactor returns [Exp tree]
     | integer
 		{ $tree = $integer.value; }
     | '-' arithfactor
+        {
+            $tree = new OpExp(OpExp.Op.UMINUS, $arithfactor.tree);
+        }
     | '(' t=arithexp ')'
 		{ $tree = $t.tree; }
     | id '(' arithexplist ')'
