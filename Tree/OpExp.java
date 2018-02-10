@@ -3,6 +3,12 @@ package Tree;
 public class OpExp extends Exp {
     // IMP is "material implication"
     // EQV is "equivalence" or "if and only if"
+    // LT -> less than
+    // LE -> less or equal
+    // EQ -> equal
+    // NE -> not equal
+    // GT -> greater than
+    // GE -> greater or equal
     public enum Op {
         IMP, EQV, OR, AND, NOT,
         LT, LE, EQ, NE, GT, GE,

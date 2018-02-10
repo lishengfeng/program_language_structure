@@ -77,13 +77,18 @@ boolfactor returns [Exp tree]
     ;
 
 compexp returns [Exp tree]
-    : arithexp '<' arithexp
-    | arithexp '<=' arithexp
+    : t1=arithexp '<' t2=arithexp
+		{ $tree = new OpExp($t1.tree, OpExp.Op.LT, $t2.tree); }
+    | t1=arithexp '<=' t2=arithexp
+		{ $tree = new OpExp($t1.tree, OpExp.Op.LE, $t2.tree); }
     | t1=arithexp '=' t2=arithexp
 		{ $tree = new OpExp($t1.tree, OpExp.Op.EQ, $t2.tree); }
-    | arithexp '!=' arithexp
-    | arithexp '>=' arithexp
-    | arithexp '>' arithexp
+    | t1=arithexp '!=' t2=arithexp
+		{ $tree = new OpExp($t1.tree, OpExp.Op.NE, $t2.tree); }
+    | t1=arithexp '>=' t2=arithexp
+		{ $tree = new OpExp($t1.tree, OpExp.Op.GE, $t2.tree); }
+    | t1=arithexp '>' t2=arithexp
+		{ $tree = new OpExp($t1.tree, OpExp.Op.GT, $t2.tree); }
     ;
 
 arithexp returns [Exp tree]
