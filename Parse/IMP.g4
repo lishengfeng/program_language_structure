@@ -35,11 +35,17 @@ statement returns [Stmt stmt]
             $stmt = new Assign($i.name, $a.tree);
         }
     | 'begin' statementlist 'end'
+        {
+            $stmt = $statementlist.stmt;
+        }
     | 'if' b=boolterm 'then' s1=statement 'else' s2=statement
         {
             $stmt = new If($b.tree, $s1.stmt, $s2.stmt);
         }
     | assertion 'while' boolterm 'do' statement
+        {
+            $stmt = new While($assertion.tree, $boolterm.tree, $statement.stmt);
+        }
     | 'assert' assertion
     ;
 
@@ -58,13 +64,19 @@ boolexp returns [Exp tree]
 boolterm returns [Exp tree]
     : t=boolterm2
 		{ $tree = $t.tree; }
-    | boolterm 'or' boolterm2
+    | bt=boolterm 'or' bt2=boolterm2
+		{
+            $tree = new OpExp($bt.tree, OpExp.Op.OR, $bt2.tree);
+        }
     ;
 
 boolterm2 returns [Exp tree]
     : t=boolfactor
 		{ $tree = $t.tree; }
-    | boolterm2 'and' boolfactor
+    | bt=boolterm2 'and' bf=boolfactor
+		{
+            $tree = new OpExp($bt.tree, OpExp.Op.AND, $bf.tree);
+        }
     ;
 
 boolfactor returns [Exp tree]
