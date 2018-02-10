@@ -47,6 +47,9 @@ statement returns [Stmt stmt]
             $stmt = new While($assertion.tree, $boolterm.tree, $statement.stmt);
         }
     | 'assert' assertion
+        {
+            $stmt = new Assert($assertion.tree);
+        }
     ;
 
 assertion returns [Exp tree]
