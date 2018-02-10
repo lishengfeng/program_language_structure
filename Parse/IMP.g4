@@ -6,12 +6,9 @@ grammar IMP;
 }
 
 program
-    : pre=assertion statlist=statementlist post=assertion
+    : pre=assertion stmtlist=statementlist post=assertion
 		{
-		    // FIXME: Print verification condition instead
-//		    $pre.tree.print();   System.out.println();
-//		    $post.tree.print();  System.out.println();
-            Exp exp = new OpExp($pre.tree, OpExp.Op.IMP, $statlist.stmt.wp($post.tree));
+            Exp exp = new OpExp($pre.tree, OpExp.Op.IMP, $stmtlist.stmt.wp($post.tree));
             exp.print();
             System.out.println();
 		}
@@ -22,7 +19,10 @@ statementlist returns [Stmt stmt]
         {
             $stmt=$s.stmt;
         }
-    | statement ';' statementlist
+    | s=statement ';' stmtList=statementlist
+        {
+            $stmt=new StmtList($s.stmt, $stmtList.stmt);
+        }
     ;
 
 statement returns [Stmt stmt]
