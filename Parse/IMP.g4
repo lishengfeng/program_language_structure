@@ -91,7 +91,13 @@ boolfactor returns [Exp tree]
     | compexp
 		{ $tree = $compexp.tree; }
     | 'forall' id '.' boolexp
+        {
+            $tree = new QuantExp($id.name, QuantExp.Quantum.ALL, $boolexp.tree);
+        }
     | 'exists' id '.' boolexp
+        {
+            $tree = new QuantExp($id.name, QuantExp.Quantum.EXISTS, $boolexp.tree);
+        }
     | 'not' boolfactor
         {
             $tree = new OpExp(OpExp.Op.NOT, $boolfactor.tree);

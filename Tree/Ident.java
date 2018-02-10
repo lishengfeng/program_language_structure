@@ -3,10 +3,23 @@ package Tree;
 public class Ident extends Exp {
     String name;
 
-    public Ident(String n) { name = n; }
+    public Ident() {
+    }
+
+    public Ident(String n) {
+        name = n;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public void print() {
-	System.out.print(name);
+        System.out.print(name);
     }
 
     @Override
