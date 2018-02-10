@@ -10,7 +10,7 @@ public class VCG {
 	    System.exit(1);
 	}
 
-        ANTLRInputStream input = new ANTLRFileStream(args[0]);
+        CharStream input = CharStreams.fromFileName(args[0]);
         IMPLexer lexer = new IMPLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         IMPParser parser = new IMPParser(tokens);

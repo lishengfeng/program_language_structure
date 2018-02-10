@@ -16,7 +16,7 @@ program
 
 statementlist
     : statement
-    | statementlist ';' statement
+    | statement ';' statementlist
     ;
 
 statement
@@ -25,86 +25,79 @@ statement
     | 'begin' statementlist 'end'
     | 'if' boolterm 'then' statement 'else' statement
     | assertion 'while' boolterm 'do' statement
-		{ /* Print verification conditions */ }
     | 'assert' assertion
-		{ /* Print verification condition */ }
     ;
 
-assertion returns [Node tree]
-    : '{' t=quantexp '}'
+assertion returns [Exp tree]
+    : '{' t=boolexp '}'
 		{ $tree = $t.tree; }
     ;
 
-quantexp returns [Node tree]
-    : t=boolexp
-		{ $tree = $t.tree; }
-    | 'forall' id '.' boolexp
-    | 'exists' id '.' boolexp
-    ;
-
-boolexp returns [Node tree]
+boolexp returns [Exp tree]
     : t=boolterm
 		{ $tree = $t.tree; }
     | boolterm '=>' boolterm
     | boolterm '<=>' boolterm
     ;
 
-boolterm returns [Node tree]
+boolterm returns [Exp tree]
     : t=boolterm2
 		{ $tree = $t.tree; }
     | boolterm 'or' boolterm2
     ;
 
-boolterm2 returns [Node tree]
+boolterm2 returns [Exp tree]
     : t=boolfactor
 		{ $tree = $t.tree; }
     | boolterm2 'and' boolfactor
     ;
 
-boolfactor returns [Node tree]
+boolfactor returns [Exp tree]
     : 'true'
     | 'false'
     | compexp
 		{ $tree = $compexp.tree; }
-    | 'not' quantexp
-    | '(' quantexp ')'
-		{ $tree = $quantexp.tree; }
+    | 'forall' id '.' boolexp
+    | 'exists' id '.' boolexp
+    | 'not' boolfactor
+    | '(' t=boolexp ')'
+		{ $tree = $t.tree; }
     ;
 
-compexp returns [Node tree]
+compexp returns [Exp tree]
     : arithexp '<' arithexp
     | arithexp '<=' arithexp
     | t1=arithexp '=' t2=arithexp
-		{ $tree = new BinOp($t1.tree, BinOp.Op.EQ, $t2.tree); }
+		{ $tree = new OpExp($t1.tree, OpExp.Op.EQ, $t2.tree); }
     | arithexp '!=' arithexp
     | arithexp '>=' arithexp
     | arithexp '>' arithexp
     ;
 
-arithexp returns [Node tree]
+arithexp returns [Exp tree]
     : t=arithterm
 		{ $tree = $t.tree; }
     | t1=arithexp '+' t2=arithterm
-		{ $tree = new BinOp($t1.tree, BinOp.Op.PLUS, $t2.tree); }
+		{ $tree = new OpExp($t1.tree, OpExp.Op.PLUS, $t2.tree); }
     | t1=arithexp '-' t2=arithterm
-		{ $tree = new BinOp($t1.tree, BinOp.Op.MINUS, $t2.tree); }
+		{ $tree = new OpExp($t1.tree, OpExp.Op.MINUS, $t2.tree); }
     ;
 
-arithterm returns [Node tree]
+arithterm returns [Exp tree]
     : t=arithfactor
 		{ $tree = $t.tree; }
     | t1=arithterm '*' t2=arithfactor
-		{ $tree = new BinOp($t1.tree, BinOp.Op.TIMES, $t2.tree); }
+		{ $tree = new OpExp($t1.tree, OpExp.Op.TIMES, $t2.tree); }
     | t1=arithterm '/' t2=arithfactor
-		{ $tree = new BinOp($t1.tree, BinOp.Op.DIV, $t2.tree); }
+		{ $tree = new OpExp($t1.tree, OpExp.Op.DIV, $t2.tree); }
     ;
 
-arithfactor returns [Node tree]
+arithfactor returns [Exp tree]
     : id
 		{ $tree = $id.name; }
     | integer
 		{ $tree = $integer.value; }
-    | '-' arithexp
+    | '-' arithfactor
     | '(' t=arithexp ')'
 		{ $tree = $t.tree; }
     | id '(' arithexplist ')'
@@ -112,7 +105,7 @@ arithfactor returns [Node tree]
 
 arithexplist
     : arithexp
-    | arithexplist ',' arithexp
+    | arithexp ',' arithexplist
     ;
 
 id returns [Ident name]

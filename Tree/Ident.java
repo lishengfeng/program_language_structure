@@ -1,7 +1,7 @@
 package Tree;
 
-public class Ident extends Node {
-    private String name;
+public class Ident extends Exp {
+    String name;
 
     public Ident(String n) { name = n; }
 
