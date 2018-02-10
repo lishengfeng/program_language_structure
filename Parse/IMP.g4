@@ -93,6 +93,9 @@ boolfactor returns [Exp tree]
     | 'forall' id '.' boolexp
     | 'exists' id '.' boolexp
     | 'not' boolfactor
+        {
+            $tree = new OpExp(OpExp.Op.NOT, $boolfactor.tree);
+        }
     | '(' t=boolexp ')'
 		{ $tree = $t.tree; }
     ;
