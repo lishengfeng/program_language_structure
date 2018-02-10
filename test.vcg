@@ -1,1 +1,1 @@
-{true} assert {x=x+1} {false}
+{x+y = 5 <=> y+x = 5} skip {x+y+1=1 => x+y=0}

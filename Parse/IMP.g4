@@ -60,8 +60,14 @@ assertion returns [Exp tree]
 boolexp returns [Exp tree]
     : t=boolterm
 		{ $tree = $t.tree; }
-    | boolterm '=>' boolterm
-    | boolterm '<=>' boolterm
+    | bt=boolterm '=>' bt2=boolterm
+		{
+            $tree = new OpExp($bt.tree, OpExp.Op.IMP, $bt2.tree);
+        }
+    | bt=boolterm '<=>' bt2=boolterm
+		{
+            $tree = new OpExp($bt.tree, OpExp.Op.EQV, $bt2.tree);
+        }
     ;
 
 boolterm returns [Exp tree]
