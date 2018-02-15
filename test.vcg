@@ -1,1 +1,11 @@
-{true}x:=x-1;y:=y*5 {x(x*10,11+x,12/x,x-13)=10 or y(y*100, y-50)<100}
+{n>0}
+i := n;
+f := 1;
+h := 1;
+{f=fib(n-i+1) and h=fib(n-i+2) and i > 0 }
+while i > 1 do begin
+     h := h + f;
+     f := h - f;
+     i := i-1
+end
+{ f = fib(n)}
