@@ -1,1 +1,0 @@
-{true} assert {x=x+1} {false}
