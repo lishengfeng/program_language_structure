@@ -92,6 +92,17 @@ fun change _ 0 = nil
       handle Change => change coins amt;
 *)
 
+fun outQuery ((y:Term list), (v_db: HornClause list))  =
+    (
+      OutLine ("query:  ");
+      OutLine ("solution: ")
+    )
+      
+
+(*
+val it = Headless [Var ("a",1),Var ("b",2)] : HornClause
+val it = Headed (Var ("a",1),[Var (#,#),Var (#,#)]) : HornClause
+*)
 fun Prolog (x as (Headed (Var _, _))) =
     OutLine ("Illegal clause:  " ^ PrintClause x)
   | Prolog (x as (Headless (Var _ :: _))) =
