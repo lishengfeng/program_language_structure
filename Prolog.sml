@@ -92,16 +92,63 @@ fun change _ 0 = nil
       handle Change => change coins amt;
 *)
 
-fun outQuery ((y:Term list), (v_db: HornClause list))  =
+fun collVar ((Var term)::terms) = ((Var term) :: collVar terms)
+  | collVar ((Fun (s, nil))::terms) = (collVar terms)
+  | collVar ((Fun (s, l))::terms) = (collVar l @ collVar terms)
+  | collVar nil = nil
+    
+
+fun solve (y as term::terms, (Headed rule)::rules) =
     (
-      OutLine ("query:  ");
-      OutLine ("solution: ")
+      (* OutLine ("rule: " ^ PrintClause (Headed rule)); *)
+      let
+        val (conclusion, provisos) = rule
+        val S = value (unify((term, conclusion), empty))
+        val oriVar = collVar y
+        val res = pairup(oriVar,(map S oriVar))
+      in
+        (*
+        OutLine ("conclusion: " ^ PrintTerm conclusion);
+        OutLine ("provisos: " ^ PrintList provisos);
+        OutLine ("oriVar: " ^ PrintList oriVar);
+        *)
+        OutSol res        
+      end
+      handle non_unifiable => (solve(y, rules))
+    )              
+  | solve (_, []) = OutLine("no impletement yet")
+  | solve ([], _) = OutLine("no impletement yet")
+  | solve (_, _) = OutLine("no impletement yet")
+
+fun OutQuery ((y:Term list), l)  =
+    (
+      (* OutLine ("y: " ^ PrintList y ^ "\n"); *)
+      solve(y, l)
     )
       
 
 (*
 val it = Headless [Var ("a",1),Var ("b",2)] : HornClause
 val it = Headed (Var ("a",1),[Var (#,#),Var (#,#)]) : HornClause
+- Prolog (parse "p(a,b,c).");
+- Prolog (parse "p(e,d,f).");
+- Prolog (parse "a(X,f(X)):-b(X).");
+- parse "p(A,B,C)?";
+val it = Headless [Fun ("p",[Var ("A",0),Var ("B",0),Var ("C",0)])]
+  : PrologParser.result
+- parse "p(a,b,c).";
+val it = Headed (Fun ("p",[Fun ("a",[]),Fun ("b",[]),Fun ("c",[])]),[])
+  : PrologParser.result
+- !db;
+val it = [Headed (Fun ("p",[Fun ("a",[]),Fun ("b",[]),Fun ("c",[])]),[])]
+  : HornClause list
+- !db
+val it =
+  [Headed (Fun ("p",[Fun ("a",[]),Fun ("b",[]),Fun ("c",[])]),[]),
+   Headed (Fun ("p",[Fun ("c",[]),Fun ("d",[]),Fun ("e",[])]),[]),
+   Headed
+     (Fun ("a",[Var ("X",0),Fun ("f",[Var ("X",0)])]),
+      [Fun ("b",[Var ("X",0)])])] : HornClause list
 *)
 fun Prolog (x as (Headed (Var _, _))) =
     OutLine ("Illegal clause:  " ^ PrintClause x)
@@ -111,7 +158,7 @@ fun Prolog (x as (Headed (Var _, _))) =
   | Prolog (x as (Headed _)) = Assert x
   | Prolog (x as Headless y) =
     (OutLine ("query:  " ^ PrintClause x);
-     OutLine ("query not yet implemented")
-     (* OutQuery (y, !db) *)
+     (* OutLine ("query not yet implemented") *)
+     OutQuery (y, !db)
     )
         
