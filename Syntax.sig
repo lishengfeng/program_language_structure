@@ -27,6 +27,7 @@ signature SYNTAX =
         val db: (HornClause list) ref;
 
         val PrintTerm: Term -> string;         (* Un-parse Term to string   *)
+        val PrintList: Term list -> string     (* Un-parse Term list to string*)
         val PrintClause: HornClause -> string; (* Un-parse HornClause       *)
         val OutLine: string -> unit;           (* Output a string on a line *)
         val OutSol: (Term * Term) list -> unit;(* Output one solution       *)
