@@ -30,9 +30,9 @@ val it = true : bool
 fun occurs v (Var w) = (v = w)
   | occurs v (Fun (F, args)) = List.exists (occurs v) args; 
 
-type Substitution = string * int -> Term
+type Substitution = string * int -> Term;
 
-val empty: Substitution = fn x => Var x
+val empty: Substitution = fn x => Var x;
 
 (*
 - val xTot: Substitution = fn x => if x = ("x", 0) then Var ("t", 0) else Var x
@@ -43,7 +43,7 @@ The logical printing depth in SML/NJ can be altered by evaluating Control.Print.
 val it = Fun ("f_name",[Var ("t",0),Var ("x",1)]) : Term
 *)
 fun value (S:Substitution) (Var v) = S v
-  | value (S:Substitution) (Fun (f, args)) = Fun(f, map(value S) args) 
+  | value (S:Substitution) (Fun (f, args)) = Fun(f, map(value S) args); 
 
 
 (*
@@ -52,7 +52,7 @@ fun value (S:Substitution) (Var v) = S v
 - comp (S,R) ("Y",0);
 val it = Var ("t3",0) : Term
 *)
-fun comp ((S:Substitution), (R:Substitution)) : Substitution = fn v => value S (R v)
+fun comp ((S:Substitution), (R:Substitution)) : Substitution = fn v => value S (R v);
                                                         
 
 (*
@@ -60,7 +60,7 @@ fun comp ((S:Substitution), (R:Substitution)) : Substitution = fn v => value S (
 - upd (("Z",0), Var("t3",0)) R;
 val it = fn : Substitution
 *)
-fun upd(v,t) S = comp (fn w => if w = v then t else Var w, S)
+fun upd(v,t) S = comp (fn w => if w = v then t else Var w, S);
 
 (* Unification *)
 
@@ -92,12 +92,106 @@ fun change _ 0 = nil
       handle Change => change coins amt;
 *)
 
-fun collVar ((Var term)::terms) = ((Var term) :: collVar terms)
-  | collVar ((Fun (s, nil))::terms) = (collVar terms)
-  | collVar ((Fun (s, l))::terms) = (collVar l @ collVar terms)
-  | collVar nil = nil
-    
+(*
+- CollVar (Fun ("p", [Var("x",0),Var("y",0), Var("z",0),Var("x",0),Var("x",1)]));
+val it = [Var ("x",0),Var ("y",0),Var ("z",0),Var ("x",1)] : Term list
+- CollVar (Fun ("p", [Var("x",0),Var("y",0), Var("z",0),Var("x",0),Fun("q",[Var("k",0),Fun("r",[Var("m",0)])])]));
+val it = [Var ("x",0),Var ("y",0),Var ("z",0),Var ("k",0),Var ("m",0)]
+  : Term list
+*)
+fun CollVar l =
+    let fun isolate [] = []
+          | isolate (x::xs) = x::isolate(List.filter (fn y:Term => y <> x ) xs);
+        fun collVar ((Var term)::terms) = ((Var term)::collVar terms)
+          | collVar ((Fun (s, nil))::terms) = (collVar terms)
+          | collVar ((Fun (s, l))::terms) = (collVar l @ collVar terms)
+          | collVar nil = nil
+    in
+      isolate (collVar l)
+    end;
+(*
+- rename 1 (Var ("x",0));
+val it = Var ("x",1) : Term
+- rename 2 (Fun ("p", [Var("x",0), Var("y",0)]));
+val it = Fun ("p",[Var ("x",2),Var ("y",2)]) : Term
+*)
+fun rename l (Var (x, _)) = Var (x,l)
+  | rename l (Fun (f, args)) = Fun (f, map (rename l) args);
 
+(*
+- val goals = [Fun ("male",[Var ("X",0)]),Fun ("parent",[Var ("X",0),Var ("Y",0)])];
+val goals =
+  [Fun ("male",[Var ("X",0)]),Fun ("parent",[Var ("X",0),Var ("Y",0)])]
+  : Term list
+- val oriVar = CollVar goals;
+val oriVar = [Var ("X",0),Var ("Y",0)] : Term list
+- val g = Fun ("male",[Var ("X",0)]);
+val g = Fun ("male",[Var ("X",0)]) : Term
+- val g = Fun ("p", [Var("A",0)]);
+val g = Fun ("p",[Var ("A",0)]) : Term
+- OutLine("current goal: " ^ PrintTerm g);
+- val gs = [Fun ("parent",[Var ("X",0),Var ("Y",0)])];
+val gs = [Fun ("parent",[Var ("X",0),Var ("Y",0)])] : Term list
+current goal: male(X)
+- val r = (Fun ("male",[Fun ("fred",[])]),[]:Term list);
+val r = (Fun ("male",[Fun ("fred",[])]),[]) : Term * Term list
+val (h,t) = r;
+- val oriVar' = CollVar [g];
+val oriVar' = [Var ("X",0)] : Term list
+- val (h,t) = r;
+val h = Fun ("male",[Fun ("fred",[])]) : Term
+val t = [] : Term list
+val newh = rename 1 h;
+val newh = Fun ("male",[Fun ("fred",[])]) : Term
+- val S' = value (unify((g, newh),empty));
+val S' = fn : Term -> Term
+- val newt = map (rename 1) t;
+val newt = [] : Term list
+- val gs' = map S' gs;
+val gs' = [Fun ("parent",[Fun ("fred",[]),Var ("Y",0)])] : Term list
+*)
+exception unsolvable;
+fun Solve (goals, db) =
+    let
+      val oriVar = CollVar goals;
+      fun solve (nil, _, _, S) = S
+        | solve (_, nil, _, _) = raise unsolvable
+        | solve (goals' as g::gs, (Headed r)::rs, l, S) =
+          (
+            let
+              val g' = value S g;
+              val oriVar' = CollVar [g];
+              val h = #1 r;
+              val newh = rename l h;
+              val S' = unify((g', newh), S)
+              val t = map (value S) (#2 r);
+              val newt = map (rename l) t
+            in
+              OutLine("original goal: " ^ PrintTerm g);
+              OutLine("current  goal: " ^ PrintTerm g');
+              OutLine("Try match role: " ^ PrintClause (Headed r));
+              OutLine("newh is :" ^ PrintTerm newh);
+              OutLine("newt is :" ^ (PrintList newt) ^ "\n");
+              let
+                val S'' = solve(newt, db, l+1, S')
+              in
+                solve(gs, db, l, S'')
+              end
+              handle unsolvable => if List.length gs = 0 then raise unsolvable else solve(gs,db,l,S)
+            end
+            handle non_unifiable => solve (goals', rs, l, S)
+            (*handle non_unifiable => (print("nuni\n");solve (goals', rs, l, S))*)
+          )
+        | solve (_, _, _, _) = raise unsolvable
+      (* Start point*)
+      val final_S = value (solve(goals, db, 1, empty))
+      val res = pairup(oriVar,(map final_S oriVar))
+    in
+      OutSol res
+    end
+    handle unsolvable => OutLine("No")
+
+(*
 fun solve (y as term::terms, (Headed rule)::rules) =
     (
       (* OutLine ("rule: " ^ PrintClause (Headed rule)); *)
@@ -119,11 +213,12 @@ fun solve (y as term::terms, (Headed rule)::rules) =
   | solve (_, []) = OutLine("no impletement yet")
   | solve ([], _) = OutLine("no impletement yet")
   | solve (_, _) = OutLine("no impletement yet")
+*)
 
 fun OutQuery ((y:Term list), l)  =
     (
       (* OutLine ("y: " ^ PrintList y ^ "\n"); *)
-      solve(y, l)
+      Solve(y, l)
     )
       
 
@@ -161,4 +256,3 @@ fun Prolog (x as (Headed (Var _, _))) =
      (* OutLine ("query not yet implemented") *)
      OutQuery (y, !db)
     )
-        
