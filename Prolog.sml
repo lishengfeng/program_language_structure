@@ -1,11 +1,19 @@
-(* o operator - The function composition f o g denotes the function with the property that (f o g) (x) = f(g x) *)
+(*
+o operator - The function composition f o g denotes the function with the property that (f o g) (x) = f(g x)
+The logical printing depth in SML/NJ can be altered by evaluating Control.Print.printDepth := 20; (or however much you want) in the REPL
+*)
 
+(*
+occurs_check means left variable appears in the right side
+length means two lists cannot be pairuped because they have different length
+*)
 exception non_unifiable and occurs_check and length;
 (*
+val pairup = fn : 'a list * 'b list -> ('a * 'b) list
+
 - pairup ([1,2],[3,4]);
 val it = [(1,3),(2,4)] : (int * int) list
 - pairup ([1,2,3],[4,5]);
-
 uncaught exception length
 *)
 fun pairup (nil,nil) = nil
@@ -13,6 +21,8 @@ fun pairup (nil,nil) = nil
   | pairup (_) = raise length; 
 
 (*
+val top = fn : (string * int -> Term) -> Term -> Term
+
 - top empty (Var("x",0));
 val it = Var ("x",0) : Term
 - top empty (Fun("f",[Var("x",0)]));
@@ -22,6 +32,8 @@ fun top S (Var v) = S v
     | top S (x) = x;
 
 (*
+val occurs = fn : string * int -> Term -> bool
+
 - occurs ("x",0) (Var("x",0));
 val it = true : bool
 - occurs ("x",0) (Fun ("f", [Var("x",1),Var("x",0)]));
@@ -35,10 +47,11 @@ type Substitution = string * int -> Term;
 val empty: Substitution = fn x => Var x;
 
 (*
+val value = fn : Substitution -> Term -> Term
+
 - val xTot: Substitution = fn x => if x = ("x", 0) then Var ("t", 0) else Var x
 - value xTot (Var("x", 0));
 val it = Var ("t",0) : Term
-The logical printing depth in SML/NJ can be altered by evaluating Control.Print.printDepth := 20; (or however much you want) in the REPL
 - value xTot (Fun("f_name",[Var("x",0),Var("x",1)]));
 val it = Fun ("f_name",[Var ("t",0),Var ("x",1)]) : Term
 *)
@@ -47,6 +60,8 @@ fun value (S:Substitution) (Var v) = S v
 
 
 (*
+val comp = fn : Substitution * Substitution -> Substitution
+
 - fun S v = if v = ("X",0) then Var("t2", 0) else if v = ("Z",0) then Var ("t3", 0) else Var v
 - fun R v = if v = ("X", 0) then Var("t1", 0) else if v = ("Y",0) then Var("Z",0) else Var v
 - comp (S,R) ("Y",0);
@@ -56,15 +71,19 @@ fun comp ((S:Substitution), (R:Substitution)) : Substitution = fn v => value S (
                                                         
 
 (*
+val upd = fn : (string * int) * Term -> Substitution -> Substitution
+
 - fun R v = if v = ("X", 0) then Var("t1", 0) else if v = ("Y",0) then Var("Z",0) else Var v
 - upd (("Z",0), Var("t3",0)) R;
 val it = fn : Substitution
 *)
 fun upd(v,t) S = comp (fn w => if w = v then t else Var w, S);
 
-(* Unification *)
-
-
+(*
+Unification
+val unify = fn
+  : (Term * Term) * (string * int -> Term) -> string * int -> Term
+*)
 fun unify ((t1,t2), S) =
     let
       val t1' = top S t1 and t2' = top S t2;
@@ -93,6 +112,8 @@ fun change _ 0 = nil
 *)
 
 (*
+val CollVar = fn : Term list -> Term list
+
 - CollVar (Fun ("p", [Var("x",0),Var("y",0), Var("z",0),Var("x",0),Var("x",1)]));
 val it = [Var ("x",0),Var ("y",0),Var ("z",0),Var ("x",1)] : Term list
 - CollVar (Fun ("p", [Var("x",0),Var("y",0), Var("z",0),Var("x",0),Fun("q",[Var("k",0),Fun("r",[Var("m",0)])])]));
@@ -109,7 +130,10 @@ fun CollVar l =
     in
       isolate (collVar l)
     end;
+
 (*
+val rename = fn : int -> Term -> Term
+
 - rename 1 (Var ("x",0));
 val it = Var ("x",1) : Term
 - rename 2 (Fun ("p", [Var("x",0), Var("y",0)]));
@@ -119,6 +143,8 @@ fun rename l (Var (x, _)) = Var (x,l)
   | rename l (Fun (f, args)) = Fun (f, map (rename l) args);
 
 (*
+val Solve = fn : Term list * HornClause list -> unit
+
 - val goals = [Fun ("male",[Var ("X",0)]),Fun ("parent",[Var ("X",0),Var ("Y",0)])];
 val goals =
   [Fun ("male",[Var ("X",0)]),Fun ("parent",[Var ("X",0),Var ("Y",0)])]
@@ -154,6 +180,9 @@ exception unsolvable;
 fun Solve (goals, db) =
     let
       val oriVar = CollVar goals;
+      (*
+      val solve= fn : Term list * HornClause list * int * Substitution -> Substitution
+       *)
       fun solve (nil, _, _, S) = S
         | solve (_, nil, _, _) = raise unsolvable
         | solve (goals' as g::gs, (Headed r)::rs, l, S) =
@@ -167,11 +196,13 @@ fun Solve (goals, db) =
               val t = map (value S) (#2 r);
               val newt = map (rename l) t
             in
+              (*
               OutLine("original goal: " ^ PrintTerm g);
               OutLine("current  goal: " ^ PrintTerm g');
               OutLine("Try match role: " ^ PrintClause (Headed r));
               OutLine("newh is :" ^ PrintTerm newh);
               OutLine("newt is :" ^ (PrintList newt) ^ "\n");
+              *)
               let
                 val S'' = solve(newt, db, l+1, S')
               in
@@ -192,29 +223,8 @@ fun Solve (goals, db) =
     handle unsolvable => OutLine("No")
 
 (*
-fun solve (y as term::terms, (Headed rule)::rules) =
-    (
-      (* OutLine ("rule: " ^ PrintClause (Headed rule)); *)
-      let
-        val (conclusion, provisos) = rule
-        val S = value (unify((term, conclusion), empty))
-        val oriVar = collVar y
-        val res = pairup(oriVar,(map S oriVar))
-      in
-        (*
-        OutLine ("conclusion: " ^ PrintTerm conclusion);
-        OutLine ("provisos: " ^ PrintList provisos);
-        OutLine ("oriVar: " ^ PrintList oriVar);
-        *)
-        OutSol res        
-      end
-      handle non_unifiable => (solve(y, rules))
-    )              
-  | solve (_, []) = OutLine("no impletement yet")
-  | solve ([], _) = OutLine("no impletement yet")
-  | solve (_, _) = OutLine("no impletement yet")
-*)
-
+val OutQuery = fn : Term list * HornClause list -> unit
+*)                                
 fun OutQuery ((y:Term list), l)  =
     (
       (* OutLine ("y: " ^ PrintList y ^ "\n"); *)
@@ -223,6 +233,8 @@ fun OutQuery ((y:Term list), l)  =
       
 
 (*
+val Prolog = fn : HornClause -> unit
+
 val it = Headless [Var ("a",1),Var ("b",2)] : HornClause
 val it = Headed (Var ("a",1),[Var (#,#),Var (#,#)]) : HornClause
 - Prolog (parse "p(a,b,c).");
@@ -253,6 +265,5 @@ fun Prolog (x as (Headed (Var _, _))) =
   | Prolog (x as (Headed _)) = Assert x
   | Prolog (x as Headless y) =
     (OutLine ("query:  " ^ PrintClause x);
-     (* OutLine ("query not yet implemented") *)
      OutQuery (y, !db)
     )
