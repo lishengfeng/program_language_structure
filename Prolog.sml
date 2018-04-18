@@ -189,7 +189,6 @@ fun Solve (goals, db) =
           (
             let
               val g' = value S g;
-              val oriVar' = CollVar [g];
               val h = #1 r;
               val newh = rename l h;
               val S' = unify((g', newh), S)
